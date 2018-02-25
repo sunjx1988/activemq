@@ -11,6 +11,7 @@ import javax.jms.Session;
 
 /**
  * Created by sunjx on 2018/2/25.
+ * 进一步封装jmstemplate 的send方法
  */
 @Service
 public class ActiveMQProducer {
@@ -24,5 +25,6 @@ public class ActiveMQProducer {
                 return session.createTextMessage(msg);
             }
         });
+
     }
 }

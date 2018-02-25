@@ -9,6 +9,7 @@ import javax.jms.TextMessage;
 
 /**
  * Created by sunjx on 2018/2/25.
+ * 实际上是个consumer类，这里使用监听模式实现
  */
 public class MsgQueueMessageListener implements SessionAwareMessageListener<Message> {
 
