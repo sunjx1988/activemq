@@ -1,4 +1,4 @@
-package activemq.consumer;
+package activemq.queue.consumer;
 
 import org.springframework.jms.listener.SessionAwareMessageListener;
 

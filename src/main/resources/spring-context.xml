@@ -14,8 +14,4 @@
        <!-- 注释配置 -->
        <context:annotation-config />
 
-       <!-- 扫描包起始位置 -->
-       <context:component-scan base-package="activemq" />
-
-       <import resource="classpath:spring-activemq.xml" />
 </beans>

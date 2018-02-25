@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+       <import resource="classpath*:spring-activemq-base.xml" />
+
+       <!-- 扫描包起始位置 -->
+       <context:component-scan base-package="activemq.topic" />
+
+       <!-- 定义topic -->
+       <bean id="topicDestination" class="org.apache.activemq.command.ActiveMQTopic">
+              <constructor-arg value="mytopic"></constructor-arg>
+       </bean>
+
+       <!-- 消息发送端 topicProducer -->
+       <bean id="topicProducer" class="org.springframework.jms.core.JmsTemplate">
+              <property name="connectionFactory" ref="connectionFactory" />
+              <property name="defaultDestination" ref="topicDestination" />
+              <!-- 开启订阅模式 -->
+              <property name="pubSubDomain" value="true" />
+
+              <!-- deliveryMode, priority, timeToLive 的开关要生效，必须配置为true，默认false-->
+              <property name="explicitQosEnabled" value="true"/>
+              <!-- 接收超时 -->
+              <property name="receiveTimeout" value="10000" />
+              <!-- 发送模式
+                   DeliveryMode.NON_PERSISTENT=1:非持久 ;
+                   DeliveryMode.PERSISTENT=2:持久
+              -->
+              <property name="deliveryMode" value="2"/>
+
+       </bean>
+
+       <!-- 消息订阅端 topicConsumer -->
+       <bean id="topicConsumer" class="activemq.topic.consumer.TopicMsgConsumer"></bean>
+
+       <!-- 消息订阅监听器容器 -->
+       <bean id="listenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+              <property name="connectionFactory" ref="connectionFactory"/>
+              <!-- 开启订阅模式 -->
+              <property name="pubSubDomain" value="true" />
+              <!-- 订阅主题 -->
+              <property name="destination" ref="topicDestination" />
+              <!-- 消息持久化值设置为true -->
+              <property name="subscriptionDurable" value="true"/>
+              <!---这里是设置接收客户端的ID，在持久化时，当这个客户端不在线时，消息就存在数据库里，直到被这个ID的客户端消费掉-->
+              <property name="clientId" value="clienctConnect"/>
+              <property name="durableSubscriptionName" value="clienctConnect" />
+              <property name="messageListener" ref="topicConsumer"/>
+              <!-- 消息应答方式
+                    Session.AUTO_ACKNOWLEDGE  消息自动签收
+                    Session.CLIENT_ACKNOWLEDGE  客户端调用acknowledge方法手动签收
+                    Session.DUPS_OK_ACKNOWLEDGE 不必必须签收，消息可能会重复发送
+               -->
+              <property name="sessionAcknowledgeMode" value="1"/>
+       </bean>
+
+
+</beans>
