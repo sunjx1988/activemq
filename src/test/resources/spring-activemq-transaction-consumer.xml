@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:amq="http://activemq.apache.org/schema/core"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://activemq.apache.org/schema/core
+       http://activemq.apache.org/schema/core/activemq-core-5.14.4.xsd">
+
+       <!-- 读入配置属性文件 -->
+       <context:property-placeholder location="classpath:activemq.properties" />
+
+       <!-- 注释配置 -->
+       <context:annotation-config />
+
+       <!-- 扫描包起始位置 -->
+       <context:component-scan base-package="transaction.consumer" />
+
+       <!-- 第三方MQ工厂: ConnectionFactory -->
+       <amq:connectionFactory id="connectionFactory"
+                              brokerURL="${activemq.brokerURL}"
+                              userName="${activemq.userName}"
+                              password="${activemq.password}"
+                              useAsyncSend="true"
+       />
+
+       <!--
+           ActiveMQ为我们提供了一个PooledConnectionFactory，通过往里面注入一个ActiveMQConnectionFactory
+           可以用来将Connection、Session和MessageProducer池化，这样可以大大的减少我们的资源消耗,要依赖于 activemq-pool包
+        -->
+       <bean id="pooledConnectionFactory" class="org.apache.activemq.jms.pool.PooledConnectionFactory">
+              <property name="connectionFactory" ref="connectionFactory"/>
+              <property name="maxConnections" value="${activemq.pool.maxConnections}"/>
+       </bean>
+
+       <!-- Spring用于管理真正的ConnectionFactory的ConnectionFactory -->
+       <bean id="singleConnectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+              <!-- 目标ConnectionFactory对应真实的可以产生JMS Connection的ConnectionFactory -->
+              <property name="targetConnectionFactory" ref="pooledConnectionFactory" />
+       </bean>
+
+       <!-- 配置自定义监听：MessageListener -->
+       <bean id="msgQueueMessageListener" class="transaction.consumer.TransactionConsumer"></bean>
+
+       <!--这个是目的地-->
+       <bean id="msgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+              <constructor-arg>
+                     <value>${activemq.queueName}</value>
+              </constructor-arg>
+       </bean>
+
+       <!-- 将连接工厂、目标对了、自定义监听注入jms模板 -->
+       <bean id="sessionAwareListenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+              <property name="connectionFactory" ref="connectionFactory" />
+              <property name="destination" ref="msgQueue" />
+              <property name="messageListener" ref="msgQueueMessageListener" />
+              <!-- ack模式
+              AUTO_ACKNOWLEDGE = 1    自动确认
+              CLIENT_ACKNOWLEDGE = 2    客户端手动确认
+              DUPS_OK_ACKNOWLEDGE = 3    自动批量确认
+              SESSION_TRANSACTED = 0    事务提交并确认
+              如果支持事务则自动为 0
+              -->
+              <property name="sessionAcknowledgeMode" value="1"/>
+              <!-- 开启事务 -->
+              <property name="sessionTransacted" value="true"/>
+       </bean>
+
+</beans>
