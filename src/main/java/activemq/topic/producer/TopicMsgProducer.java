@@ -22,7 +22,7 @@ public class TopicMsgProducer {
 
         jmsTemplate.send(jmsTemplate.getDefaultDestination(), new MessageCreator() {
             public Message createMessage(Session session) throws JMSException {
-                System.out.println("topic producer send msg!!!");
+                System.out.println(msg);
                 return session.createTextMessage(msg);
             }
         });

@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
        xmlns:amq="http://activemq.apache.org/schema/core"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
        http://activemq.apache.org/schema/core
        http://activemq.apache.org/schema/core/activemq-core-5.14.4.xsd">
 
-       <import resource="classpath*:spring-context.xml" />
+       <!-- 读入配置属性文件 -->
+       <context:property-placeholder location="classpath:activemq.properties" />
+
+       <!-- 注释配置 -->
+       <context:annotation-config />
+
+       <!-- 扫描包起始位置 -->
+       <context:component-scan base-package="activemq.topic.consumer" />
 
        <!-- 第三方MQ工厂: ConnectionFactory -->
        <amq:connectionFactory id="connectionFactory"
@@ -30,6 +40,26 @@
        <bean id="singleConnectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
               <!-- 目标ConnectionFactory对应真实的可以产生JMS Connection的ConnectionFactory -->
               <property name="targetConnectionFactory" ref="pooledConnectionFactory" />
+       </bean>
+
+       <!-- 定义topic -->
+       <bean id="topicDestination" class="org.apache.activemq.command.ActiveMQTopic">
+              <constructor-arg value="mytopic"></constructor-arg>
+       </bean>
+
+       <!-- 消息订阅端 topicConsumer -->
+       <bean id="topicConsumer" class="activemq.topic.consumer.TopicMsgConsumer"></bean>
+
+       <!-- 消息订阅监听器容器 -->
+       <bean id="listenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+              <property name="connectionFactory" ref="singleConnectionFactory"/>
+              <!-- 开启订阅模式 -->
+              <property name="pubSubDomain" value="true" />
+              <!-- 订阅主题 -->
+              <property name="destination" ref="topicDestination" />
+              <!-- 消息监听器 -->
+              <property name="messageListener" ref="topicConsumer"/>
+
        </bean>
 
 </beans>

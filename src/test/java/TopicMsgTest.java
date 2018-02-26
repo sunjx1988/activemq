@@ -15,11 +15,21 @@ public class TopicMsgTest extends BaseJunit4Test {
 
     @Test
     public void topicMsgTest(){
-        topicMsgProducer.sendTopicMessage("hello topic msg world!!!");
+        String inputString = null;
+
+        for (int i = 0; i < 10; i++) {
+            inputString = Integer.toString(i);
+            topicMsgProducer.sendTopicMessage(inputString);
+        }
+
     }
 
     @Test
     public void test(){
-
+        try {
+            Thread.sleep(1000000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
